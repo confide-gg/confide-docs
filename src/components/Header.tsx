@@ -1,67 +1,84 @@
-import { Link } from '@tanstack/react-router'
-
-import { useState } from 'react'
-import { Home, Menu, X } from 'lucide-react'
+import { Link } from "@tanstack/react-router";
+import { Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false)
+	const [isOpen, setIsOpen] = useState(false);
+	const [scrolled, setScrolled] = useState(false);
 
-  return (
-    <>
-      <header className="p-4 flex items-center bg-gray-800 text-white shadow-lg">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
-        <h1 className="ml-4 text-xl font-semibold">
-          <Link to="/">
-            <img
-              src="/tanstack-word-logo-white.svg"
-              alt="TanStack Logo"
-              className="h-10"
-            />
-          </Link>
-        </h1>
-      </header>
+	useEffect(() => {
+		const onScroll = () => setScrolled(window.scrollY > 20);
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, []);
 
-      <aside
-        className={`fixed top-0 left-0 h-full w-80 bg-gray-900 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-xl font-bold">Navigation</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Close menu"
-          >
-            <X size={24} />
-          </button>
-        </div>
+	useEffect(() => {
+		document.body.style.overflow = isOpen ? "hidden" : "";
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, [isOpen]);
 
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <Link
-            to="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <Home size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setIsOpen(false);
+		};
+		if (isOpen) document.addEventListener("keydown", onKey);
+		return () => document.removeEventListener("keydown", onKey);
+	}, [isOpen]);
 
-          {/* Demo Links Start */}
+	const close = () => setIsOpen(false);
 
-          {/* Demo Links End */}
-        </nav>
-      </aside>
-    </>
-  )
+	return (
+		<>
+			<header
+				className={`docs-header${scrolled || isOpen ? " is-scrolled" : ""}`}
+			>
+				<Link
+					to="/docs/$slug"
+					params={{ slug: "getting-started" }}
+					className="docs-brand"
+					onClick={close}
+				>
+					Confide Docs
+				</Link>
+
+				<nav className="docs-header-nav">
+					<Link to="/docs/$slug" params={{ slug: "getting-started" }}>
+						Getting Started
+					</Link>
+					<Link to="/docs/$slug" params={{ slug: "api-reference" }}>
+						API Reference
+					</Link>
+				</nav>
+
+				<button
+					type="button"
+					onClick={() => setIsOpen((v) => !v)}
+					className="docs-menu-button"
+					aria-label={isOpen ? "Close menu" : "Open menu"}
+					aria-expanded={isOpen}
+				>
+					{isOpen ? <X size={24} /> : <Menu size={24} />}
+				</button>
+			</header>
+
+			<div className={`docs-mobile-menu${isOpen ? " is-open" : ""}`}>
+				<Link
+					to="/docs/$slug"
+					params={{ slug: "getting-started" }}
+					onClick={close}
+				>
+					Getting Started
+				</Link>
+				<Link
+					to="/docs/$slug"
+					params={{ slug: "api-reference" }}
+					onClick={close}
+				>
+					API Reference
+				</Link>
+			</div>
+		</>
+	);
 }
